@@ -3,11 +3,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
-/**
- * Created by Gideon on 02.08.2017.
- */
 public class ConnectedUsers {
     private JPanel panel1;
     private JList users;

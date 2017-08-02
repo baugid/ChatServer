@@ -7,9 +7,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-/**
- * Created by Gideon on 02.08.2017.
- */
 public class Main {
     private ArrayList<User> users;
     private Thread acceptor;

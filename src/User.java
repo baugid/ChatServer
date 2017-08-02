@@ -1,10 +1,6 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 
-/**
- * Created by Gideon on 02.08.2017.
- */
 public class User implements Runnable {
     private Socket soc = null;
     private String name;
