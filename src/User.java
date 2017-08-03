@@ -10,7 +10,7 @@ public class User implements Runnable {
     private Thread ownThread;
     private volatile boolean isOpen = true;
 
-    public User(Socket soc, String name, Main receiver) {
+    public User(Socket soc, Main receiver) {
         this.soc = soc;
         this.name = name;
         this.receiver = receiver;
@@ -28,19 +28,24 @@ public class User implements Runnable {
 
     @Override
     public void run() {
+        fetchName();
+        //Inform user that he got accepted
+        out.println("accepted!");
+        //send joined message
+        receiver.sendMessageToAll(name + " joined the server!");
+        receiver.addUser(this);
         String message = "";
         do {
             //read message
             try {
                 message = in.readLine();
             } catch (IOException e) {
-                e.printStackTrace();
+                receiver.disconnectUser(this);
+                return;
             }
             //close connection if requested
             if (message.equals("closing!")) {
-                close();
-                receiver.sendMessageToAll(name + " left the server!");
-                receiver.removeUser(this);
+                receiver.disconnectUser(this);
                 return;
             }
             //ignore messages that don't fit in the format [name]:text
@@ -69,5 +74,32 @@ public class User implements Runnable {
             e.printStackTrace();
         }
         out.close();
+    }
+
+    private void fetchName(){
+        boolean error;
+//get name and verify name
+        do {
+            error = false;
+
+            try {
+                name = in.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (!name.matches("(\\d|\\w)+")) {
+                error = true;
+                out.println("otherName");
+                continue;
+            }
+
+            for (int i=0;i<receiver.getAmountOfUsers();i++) {
+                if (receiver.accessUser(i).getName().equals(name)) {
+                    error = true;
+                    out.println("otherName");
+                    break;
+                }
+            }
+        } while (error);
     }
 }

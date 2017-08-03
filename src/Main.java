@@ -50,10 +50,6 @@ public class Main {
     public void connectionAcceptor(int port) {
         ServerSocket soc = null;
         Socket s = null;
-        BufferedReader sockListener = null;
-        PrintStream sockPrinter = null;
-        String name = "";
-        boolean error = false;
         //create server socket
         try {
             soc = new ServerSocket(port);
@@ -67,40 +63,11 @@ public class Main {
             //init Connection
             try {
                 s = soc.accept();
-                sockListener = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                sockPrinter = new PrintStream(s.getOutputStream());
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //get name and verify name
-            do {
-                error = false;
-
-                try {
-                    name = sockListener.readLine();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if (!name.matches("(\\d|\\w)+")) {
-                    error = true;
-                    sockPrinter.println("otherName");
-                    continue;
-                }
-
-                for (User u : users) {
-                    if (u.getName().equals(name)) {
-                        error = true;
-                        sockPrinter.println("otherName");
-                        break;
-                    }
-                }
-            } while (error);
-            //Inform user that he got accepted
-            sockPrinter.println("accepted!");
-            //send joined message
-            sendMessageToAll(name + " joined the server!");
-            //add user
-            addUser(new User(s, name, this));
+            //create user
+            new User(s, this);
         }
     }
 
@@ -124,6 +91,12 @@ public class Main {
         }
     }
 
+    public int getAmountOfUsers() {
+        synchronized (users) {
+            return users.size();
+        }
+    }
+
     public void sendMessageToAll(String message) {
         synchronized (users) {
             for (User u : users) {
@@ -131,5 +104,31 @@ public class Main {
             }
         }
         gui.addMessage(message);
+    }
+
+    public void disconnectUser(int index) {
+        synchronized (users) {
+            users.get(index).sendMessage("disconnect!");
+            users.get(index).close();
+            sendMessageToAll(users.get(index).getName() + " left the server!");
+            users.remove(index);
+            visUserList.removeUser(index);
+        }
+    }
+
+    public void disconnectAll() {
+        for (int index = 0; index < users.size(); index++) {
+            disconnectUser(index);
+        }
+    }
+
+    public void disconnectUser(User user) {
+        int index;
+        synchronized (users) {
+            index = users.indexOf(user);
+        }
+        if (index >= 0) {
+            disconnectUser(index);
+        }
     }
 }

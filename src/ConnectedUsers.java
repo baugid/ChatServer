@@ -18,9 +18,7 @@ public class ConnectedUsers {
         kick.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int selected = users.getSelectedIndex();
-                User u = main.accessUser(selected);
-                u.sendMessage("disconnect!");
+                main.disconnectUser(users.getSelectedIndex());
             }
         });
         //enable kick if user is selected

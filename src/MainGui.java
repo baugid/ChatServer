@@ -1,8 +1,5 @@
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 public class MainGui {
 
@@ -22,6 +19,15 @@ public class MainGui {
                 }
             }
         });
+        input.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && !input.getText().equals("")) {
+                    main.sendMessageToAll("[SERVER]:" + input.getText());
+                    input.setText("");
+                }
+            }
+        });
     }
 
     public static MainGui init(Main main) {
@@ -33,7 +39,7 @@ public class MainGui {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                main.sendMessageToAll("disconnect!");
+                main.disconnectAll();
                 System.exit(0);
             }
         });
@@ -47,4 +53,5 @@ public class MainGui {
     public void addMessage(String message) {
         output.setText(output.getText() + message + "\n");
     }
+
 }
