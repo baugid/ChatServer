@@ -1,38 +1,20 @@
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ConnectedUsers {
     private JPanel panel1;
-    private JList users;
+    private JList<String> users;
     private JButton kick;
-    private DefaultListModel model;
+    private DefaultListModel<String> model;
 
     private ConnectedUsers(Main main) {
         kick.setEnabled(false);
-        model = new DefaultListModel();
+        model = new DefaultListModel<>();
         users.setModel(model);
         //kick selected user
-        kick.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                main.disconnectUser(users.getSelectedIndex());
-            }
-        });
+        kick.addActionListener((e) -> main.disconnectUser(users.getSelectedIndex()));
         //enable kick if user is selected
-        users.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (users.getSelectedIndex() < 0) {
-                    kick.setEnabled(false);
-                } else {
-                    kick.setEnabled(true);
-                }
-            }
-        });
-    }
+        users.addListSelectionListener(e -> kick.setEnabled(users.getSelectedIndex()>=0));
+}
 
     public static ConnectedUsers init(Main main) {
         ConnectedUsers cU = new ConnectedUsers(main);
@@ -52,5 +34,9 @@ public class ConnectedUsers {
     //removes users
     public void removeUser(int index) {
         model.remove(index);
+    }
+
+    public void close() {
+        panel1.getRootPane().setVisible(false);
     }
 }

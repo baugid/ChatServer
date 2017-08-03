@@ -8,11 +8,9 @@ public class User implements Runnable {
     private PrintStream out = null;
     private Main receiver;
     private Thread ownThread;
-    private volatile boolean isOpen = true;
 
     public User(Socket soc, Main receiver) {
         this.soc = soc;
-        this.name = name;
         this.receiver = receiver;
         //open streams
         try {
@@ -34,7 +32,7 @@ public class User implements Runnable {
         //send joined message
         receiver.sendMessageToAll(name + " joined the server!");
         receiver.addUser(this);
-        String message = "";
+        String message;
         do {
             //read message
             try {
@@ -49,10 +47,10 @@ public class User implements Runnable {
                 return;
             }
             //ignore messages that don't fit in the format [name]:text
-            if (message.matches("^\\[" + name + "\\]:.*$")) {
+            if (message.matches("^\\[" + name + "]:.*$")) {
                 receiver.sendMessageToAll(message);
             }
-        } while (isOpen);
+        } while (!ownThread.isInterrupted());
     }
 
     //send a single message
@@ -66,7 +64,7 @@ public class User implements Runnable {
 
     //close streams
     public void close() {
-        isOpen = false;
+        ownThread.interrupt();
         try {
             soc.close();
             in.close();

@@ -13,7 +13,7 @@ public class MainGui {
         send.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!input.getText().equals("")) {
+                if (input.getText() != null && !input.getText().equals("")) {
                     main.sendMessageToAll("[SERVER]:" + input.getText());
                     input.setText("");
                 }
@@ -22,7 +22,7 @@ public class MainGui {
         input.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER && !input.getText().equals("")) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER && input.getText() != null && !input.getText().equals("")) {
                     main.sendMessageToAll("[SERVER]:" + input.getText());
                     input.setText("");
                 }
@@ -34,13 +34,12 @@ public class MainGui {
         MainGui mG = new MainGui(main);
         JFrame frame = new JFrame("Chat");
         frame.setContentPane(mG.panel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
         //close clients on close
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                main.disconnectAll();
-                System.exit(0);
+                main.exit();
             }
         });
         frame.pack();
@@ -54,4 +53,7 @@ public class MainGui {
         output.setText(output.getText() + message + "\n");
     }
 
+    public void close() {
+        panel.getRootPane().setVisible(false);
+    }
 }

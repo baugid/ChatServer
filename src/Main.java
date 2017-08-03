@@ -1,14 +1,11 @@
 import javax.swing.*;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
 public class Main {
-    private ArrayList<User> users;
+    private final ArrayList<User> users;
     private Thread acceptor;
     private MainGui gui;
     private ConnectedUsers visUserList;
@@ -19,12 +16,7 @@ public class Main {
         gui = MainGui.init(this);
         visUserList = ConnectedUsers.init(this);
         //accept new clients
-        acceptor = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                connectionAcceptor(port);
-            }
-        });
+        acceptor = new Thread(() -> connectionAcceptor(port));
         acceptor.start();
     }
 
@@ -47,7 +39,7 @@ public class Main {
         }
     }
 
-    public void connectionAcceptor(int port) {
+    private  void connectionAcceptor(int port) {
         ServerSocket soc = null;
         Socket s = null;
         //create server socket
@@ -59,7 +51,7 @@ public class Main {
         }
 
 
-        while (true) {
+        while (!Thread.currentThread().isInterrupted()) {
             //init Connection
             try {
                 s = soc.accept();
@@ -68,6 +60,7 @@ public class Main {
             }
             //create user
             new User(s, this);
+            System.out.println("user added");
         }
     }
 
@@ -81,13 +74,6 @@ public class Main {
     public User accessUser(int index) {
         synchronized (users) {
             return users.get(index);
-        }
-    }
-
-    public void removeUser(User u) {
-        synchronized (users) {
-            visUserList.removeUser(users.indexOf(u));
-            users.remove(u);
         }
     }
 
@@ -108,11 +94,13 @@ public class Main {
 
     public void disconnectUser(int index) {
         synchronized (users) {
-            users.get(index).sendMessage("disconnect!");
-            users.get(index).close();
-            sendMessageToAll(users.get(index).getName() + " left the server!");
-            users.remove(index);
-            visUserList.removeUser(index);
+            if (index < users.size() && index >= 0) {
+                users.get(index).sendMessage("disconnect!");
+                sendMessageToAll(users.get(index).getName() + " left the server!");
+                users.get(index).close();
+                users.remove(index);
+                visUserList.removeUser(index);
+            }
         }
     }
 
@@ -130,5 +118,13 @@ public class Main {
         if (index >= 0) {
             disconnectUser(index);
         }
+    }
+
+    public void exit(){
+        disconnectAll();
+        acceptor.interrupt();
+        visUserList.close();
+        gui.close();
+        System.exit(0);
     }
 }
