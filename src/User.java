@@ -83,7 +83,7 @@ public class User implements Runnable {
             try {
                 name = in.readLine();
             } catch (IOException e) {
-                e.printStackTrace();
+                receiver.disconnectUser(this);
             }
             if (!name.matches("(\\d|\\w)+")) {
                 error = true;
@@ -98,6 +98,6 @@ public class User implements Runnable {
                     break;
                 }
             }
-        } while (error);
+        } while (error&&!ownThread.isInterrupted());
     }
 }

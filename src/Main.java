@@ -18,6 +18,7 @@ public class Main {
         //accept new clients
         acceptor = new Thread(() -> connectionAcceptor(port));
         acceptor.start();
+
     }
 
     public static void main(String[] args) {
@@ -61,6 +62,11 @@ public class Main {
             //create user
             new User(s, this);
             System.out.println("user added");
+        }
+        try {
+            soc.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -34,7 +34,7 @@ public class MainGui {
         MainGui mG = new MainGui(main);
         JFrame frame = new JFrame("Chat");
         frame.setContentPane(mG.panel);
-        frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         //close clients on close
         frame.addWindowListener(new WindowAdapter() {
             @Override
