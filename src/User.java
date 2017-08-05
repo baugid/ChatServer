@@ -47,7 +47,7 @@ public class User implements Runnable {
                 return;
             }
             //ignore messages that don't fit in the format [name]:text
-            if (message.matches("^\\[" + name + "]:.*$")) {
+            if (message.matches("^\\[" + name + "]:.+$")&&!message.substring(name.length()+4).matches("[\\t\\s]*")) {
                 receiver.sendMessageToAll(message);
             }
         } while (!ownThread.isInterrupted());

@@ -61,7 +61,6 @@ public class Main {
             }
             //create user
             new User(s, this);
-            System.out.println("user added");
         }
         try {
             soc.close();
