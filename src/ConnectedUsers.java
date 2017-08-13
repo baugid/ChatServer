@@ -13,8 +13,8 @@ public class ConnectedUsers {
         //kick selected user
         kick.addActionListener((e) -> main.disconnectUser(users.getSelectedIndex()));
         //enable kick if user is selected
-        users.addListSelectionListener(e -> kick.setEnabled(users.getSelectedIndex()>=0));
-}
+        users.addListSelectionListener(e -> kick.setEnabled(users.getSelectedIndex() >= 0));
+    }
 
     public static ConnectedUsers init(Main main) {
         ConnectedUsers cU = new ConnectedUsers(main);
@@ -27,13 +27,16 @@ public class ConnectedUsers {
     }
 
     //adds users
-    public void addNewUser(User u) {
-        model.addElement(u.getName());
+    public void addNewUser(String name) {
+        SwingUtilities.invokeLater(()->model.addElement(name));
+    }
+    public void updateUser(String name, int index){
+        SwingUtilities.invokeLater(()->model.set(index,name));
     }
 
     //removes users
     public void removeUser(int index) {
-        model.remove(index);
+        SwingUtilities.invokeLater(()->model.remove(index));
     }
 
     public void close() {
