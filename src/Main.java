@@ -19,9 +19,9 @@ public class Main {
         gui = MainGui.init(this);
         visUserList = ConnectedUsers.init(this);
 
-        cores= coreCount;
-        msgReader=Executors.newScheduledThreadPool(1);
-        msgReader.scheduleAtFixedRate(this::checkUserMessages,0,500, TimeUnit.MILLISECONDS);
+        cores = coreCount;
+        msgReader = Executors.newScheduledThreadPool(1);
+        msgReader.scheduleAtFixedRate(this::checkUserMessages, 0, 500, TimeUnit.MILLISECONDS);
         //accept new clients
         acceptor = new Thread(() -> connectionAcceptor(port));
         acceptor.start();
@@ -29,16 +29,16 @@ public class Main {
     }
 
     private void checkUserMessages() {
-        ExecutorService checker =Executors.newFixedThreadPool(cores);
-        synchronized (users){
-            for (User u: users) {
+        ExecutorService checker = Executors.newFixedThreadPool(cores);
+        synchronized (users) {
+            for (User u : users) {
                 checker.submit(u);
             }
         }
         //wait till all tasks are finished
         checker.shutdown();
         try {
-            checker.awaitTermination(100,TimeUnit.DAYS);
+            checker.awaitTermination(100, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -59,13 +59,13 @@ public class Main {
 
             default:
                 port = Integer.parseInt(args[0]);
-                coreCount= Integer.parseInt(args[1]);
+                coreCount = Integer.parseInt(args[1]);
                 break;
         }
-        new Main(port,coreCount);
+        new Main(port, coreCount);
     }
 
-    private static int getUserPort(){
+    private static int getUserPort() {
         //ask user for port number
         do {
             try {
@@ -110,7 +110,12 @@ public class Main {
     public void addUser(User u) {
         synchronized (users) {
             users.add(u);
-            visUserList.addNewUser(u.getName());
+            String name = u.getName();
+            if (name == null || name.equals("")) {
+                visUserList.addNewUser(u.getIP() + ":" + u.getPort());
+            } else {
+                visUserList.addNewUser(name);
+            }
         }
     }
 
@@ -139,7 +144,12 @@ public class Main {
         synchronized (users) {
             if (index < users.size() && index >= 0) {
                 users.get(index).sendMessage("disconnect!");
-                sendMessageToAll(users.get(index).getName() + " left the server!");
+                String name = users.get(index).getName();
+                if (name == null || name.equals("")) {
+                    sendMessageToAll(users.get(index).getIP() + ":" + users.get(index).getPort() + " left the server!");
+                } else {
+                    sendMessageToAll(name + " left the server!");
+                }
                 users.get(index).close();
                 users.remove(index);
                 visUserList.removeUser(index);
@@ -173,8 +183,8 @@ public class Main {
     }
 
     public void correctShownUserName(User u) {
-        synchronized (users){
-            visUserList.updateUser(u.getName(),users.indexOf(u));
+        synchronized (users) {
+            visUserList.updateUser(u.getName(), users.indexOf(u));
         }
     }
 }

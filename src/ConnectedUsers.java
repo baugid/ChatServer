@@ -28,15 +28,16 @@ public class ConnectedUsers {
 
     //adds users
     public void addNewUser(String name) {
-        SwingUtilities.invokeLater(()->model.addElement(name));
+        SwingUtilities.invokeLater(() -> model.addElement(name));
     }
-    public void updateUser(String name, int index){
-        SwingUtilities.invokeLater(()->model.set(index,name));
+
+    public void updateUser(String name, int index) {
+        SwingUtilities.invokeLater(() -> model.set(index, name));
     }
 
     //removes users
     public void removeUser(int index) {
-        SwingUtilities.invokeLater(()->model.remove(index));
+        SwingUtilities.invokeLater(() -> model.remove(index));
     }
 
     public void close() {

@@ -60,7 +60,7 @@ public class User implements Runnable {
     }
 
     public String getName() {
-        return name!=null?name:soc.getInetAddress().getHostAddress();
+        return name != null ? name : "";
     }
 
     //close streams
@@ -79,15 +79,15 @@ public class User implements Runnable {
 //get and verify name
         try {
             while (in.ready()) {
-                    nameHelper = in.readLine();
+                nameHelper = in.readLine();
                 if (!nameHelper.matches("(\\d|\\w)+")) {
                     out.println("otherName");
                     return false;
                 }
 
                 for (int i = 0; i < receiver.getAmountOfUsers(); i++) {
-                    String name =receiver.accessUser(i).getName();
-                    if (name!=null&&!name.equals("")&&name.equals(nameHelper)) {
+                    String name = receiver.accessUser(i).getName();
+                    if (name != null && !name.equals("") && name.equals(nameHelper)) {
                         out.println("otherName");
                         return false;
                     }
@@ -99,5 +99,13 @@ public class User implements Runnable {
             receiver.disconnectUser(this);
         }
         return false;
+    }
+
+    public int getPort() {
+        return soc.getPort();
+    }
+
+    public String getIP() {
+        return soc.getInetAddress().getHostAddress();
     }
 }
