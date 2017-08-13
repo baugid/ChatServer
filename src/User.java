@@ -1,13 +1,13 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.Optional;
 
 public class User implements Runnable {
     private Socket soc = null;
-    private String name;
+    private String name = null;
     private BufferedReader in = null;
     private PrintStream out = null;
     private Main receiver;
-    private Thread ownThread;
 
     public User(Socket soc, Main receiver) {
         this.soc = soc;
@@ -19,38 +19,39 @@ public class User implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //start accepting messages
-        ownThread = new Thread(this);
-        ownThread.start();
     }
 
     @Override
     public void run() {
-        fetchName();
-        //Inform user that he got accepted
-        out.println("accepted!");
-        //send joined message
-        receiver.sendMessageToAll(name + " joined the server!");
-        receiver.addUser(this);
-        String message;
-        do {
-            //read message
-            try {
-                message = in.readLine();
-            } catch (IOException e) {
-                receiver.disconnectUser(this);
-                return;
+        try {
+            if (name == null) {
+                if (fetchName()) {
+                    //Inform user that he got accepted
+                    out.println("accepted!");
+                    //send joined message
+                    receiver.sendMessageToAll(name + " joined the server!");
+                    receiver.correctShownUserName(this);
+                }
+            } else {
+                String message = "";
+                //read message
+                while (in.ready()) {
+                    message = in.readLine();
+                    //close connection if requested
+                    if (message.equals("closing!")) {
+                        receiver.disconnectUser(this);
+                        return;
+                    }
+                    //ignore messages that don't fit in the format [name]:text
+                    if (message.matches("^\\[" + name + "]:.+$") && !message.substring(name.length() + 4).matches("[\\t\\s]*")) {
+                        receiver.sendMessageToAll(message);
+                    }
+                }
             }
-            //close connection if requested
-            if (message.equals("closing!")) {
-                receiver.disconnectUser(this);
-                return;
-            }
-            //ignore messages that don't fit in the format [name]:text
-            if (message.matches("^\\[" + name + "]:.+$")&&!message.substring(name.length()+4).matches("[\\t\\s]*")) {
-                receiver.sendMessageToAll(message);
-            }
-        } while (!ownThread.isInterrupted());
+        } catch (IOException e) {
+            receiver.disconnectUser(this);
+        }
+
     }
 
     //send a single message
@@ -59,12 +60,11 @@ public class User implements Runnable {
     }
 
     public String getName() {
-        return name;
+        return name!=null?name:soc.getInetAddress().getHostAddress();
     }
 
     //close streams
     public void close() {
-        ownThread.interrupt();
         try {
             soc.close();
             in.close();
@@ -74,30 +74,30 @@ public class User implements Runnable {
         out.close();
     }
 
-    private void fetchName(){
-        boolean error;
-//get name and verify name
-        do {
-            error = false;
-
-            try {
-                name = in.readLine();
-            } catch (IOException e) {
-                receiver.disconnectUser(this);
-            }
-            if (!name.matches("(\\d|\\w)+")) {
-                error = true;
-                out.println("otherName");
-                continue;
-            }
-
-            for (int i=0;i<receiver.getAmountOfUsers();i++) {
-                if (receiver.accessUser(i).getName().equals(name)) {
-                    error = true;
+    private boolean fetchName() {
+        String nameHelper = "";
+//get and verify name
+        try {
+            while (in.ready()) {
+                    nameHelper = in.readLine();
+                if (!nameHelper.matches("(\\d|\\w)+")) {
                     out.println("otherName");
-                    break;
+                    return false;
                 }
+
+                for (int i = 0; i < receiver.getAmountOfUsers(); i++) {
+                    String name =receiver.accessUser(i).getName();
+                    if (name!=null&&!name.equals("")&&name.equals(nameHelper)) {
+                        out.println("otherName");
+                        return false;
+                    }
+                }
+                name = nameHelper;
+                return true;
             }
-        } while (error&&!ownThread.isInterrupted());
+        } catch (IOException e) {
+            receiver.disconnectUser(this);
+        }
+        return false;
     }
 }

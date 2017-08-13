@@ -2,45 +2,81 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Main {
     private final ArrayList<User> users;
     private Thread acceptor;
     private MainGui gui;
     private ConnectedUsers visUserList;
+    private int cores;
+    private ScheduledExecutorService msgReader;
 
-    public Main(int port) {
+    public Main(int port, int coreCount) {
         users = new ArrayList<>();
         //create guis
         gui = MainGui.init(this);
         visUserList = ConnectedUsers.init(this);
+
+        cores= coreCount;
+        msgReader=Executors.newScheduledThreadPool(1);
+        msgReader.scheduleAtFixedRate(this::checkUserMessages,0,500, TimeUnit.MILLISECONDS);
         //accept new clients
         acceptor = new Thread(() -> connectionAcceptor(port));
         acceptor.start();
 
     }
 
-    public static void main(String[] args) {
-        //create a new main object on default or specified port
-        if (args.length > 0) {
-            new Main(Integer.parseInt(args[0]));
-        } else {
-            //ask user for port number
-            int port;
-            do {
-                try {
-                    port = Integer.parseInt(JOptionPane.showInputDialog("Enter port here: "));
-                    break;
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Please enter a correct port number.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } while (true);
-            new Main(port);
+    private void checkUserMessages() {
+        ExecutorService checker =Executors.newFixedThreadPool(cores);
+        synchronized (users){
+            for (User u: users) {
+                checker.submit(u);
+            }
+        }
+        //wait till all tasks are finished
+        checker.shutdown();
+        try {
+            checker.awaitTermination(100,TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    private  void connectionAcceptor(int port) {
+    public static void main(String[] args) {
+        int port;
+        int coreCount = 6;
+        //create a new main object on default or specified port
+        switch (args.length) {
+            case 1:
+                port = getUserPort();
+                break;
+
+            case 0:
+                port = getUserPort();
+                break;
+
+            default:
+                port = Integer.parseInt(args[0]);
+                coreCount= Integer.parseInt(args[1]);
+                break;
+        }
+        new Main(port,coreCount);
+    }
+
+    private static int getUserPort(){
+        //ask user for port number
+        do {
+            try {
+                return Integer.parseInt(JOptionPane.showInputDialog("Enter port here: "));
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Please enter a correct port number.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } while (true);
+    }
+
+    private void connectionAcceptor(int port) {
         ServerSocket soc = null;
         Socket s = null;
         //create server socket
@@ -60,7 +96,9 @@ public class Main {
                 e.printStackTrace();
             }
             //create user
-            new User(s, this);
+            synchronized (users) {
+                addUser(new User(s, this));
+            }
         }
         try {
             soc.close();
@@ -72,7 +110,7 @@ public class Main {
     public void addUser(User u) {
         synchronized (users) {
             users.add(u);
-            visUserList.addNewUser(u);
+            visUserList.addNewUser(u.getName());
         }
     }
 
@@ -125,11 +163,18 @@ public class Main {
         }
     }
 
-    public void exit(){
-        disconnectAll();
+    public void exit() {
         acceptor.interrupt();
         visUserList.close();
         gui.close();
+        msgReader.shutdown();
+        disconnectAll();
         System.exit(0);
+    }
+
+    public void correctShownUserName(User u) {
+        synchronized (users){
+            visUserList.updateUser(u.getName(),users.indexOf(u));
+        }
     }
 }
