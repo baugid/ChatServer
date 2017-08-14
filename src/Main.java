@@ -50,7 +50,7 @@ public class Main {
         //create a new main object on default or specified port
         switch (args.length) {
             case 1:
-                port = getUserPort();
+                port = Integer.parseInt(args[0]);
                 break;
 
             case 0:
