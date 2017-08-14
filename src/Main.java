@@ -21,9 +21,10 @@ public class Main {
 
         cores = coreCount;
         msgReader = Executors.newScheduledThreadPool(1);
-        msgReader.scheduleWithFixedDelay(this::checkUserMessages, 0, 500, TimeUnit.MILLISECONDS);
+        msgReader.scheduleAtFixedRate(this::checkUserMessages, 0, 500, TimeUnit.MILLISECONDS);
         //accept new clients
         acceptor = new Thread(() -> connectionAcceptor(port));
+        acceptor.setDaemon(true);
         acceptor.start();
 
     }
