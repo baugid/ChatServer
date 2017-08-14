@@ -26,7 +26,6 @@ public class Main {
         acceptor = new Thread(() -> connectionAcceptor(port));
         acceptor.setDaemon(true);
         acceptor.start();
-
     }
 
     private void checkUserMessages() {
@@ -135,32 +134,39 @@ public class Main {
     public void sendMessageToAll(String message) {
         synchronized (users) {
             for (User u : users) {
-                u.sendMessage(message);
+                if (u.getName() != null && !u.getName().equals("")) {
+                    u.sendMessage(message);
+                }
             }
         }
         gui.addMessage(message);
     }
 
     public void disconnectUser(int index) {
-        synchronized (users) {
-            if (index < users.size() && index >= 0) {
-                users.get(index).sendMessage("disconnect!");
-                String name = users.get(index).getName();
-                if (name == null || name.equals("")) {
-                    sendMessageToAll(users.get(index).getIP() + ":" + users.get(index).getPort() + " left the server!");
-                } else {
+        if (index < users.size() && index >= 0) {
+            User u;
+            synchronized (users) {
+                u = users.remove(index);
+                visUserList.removeUser(index);
+                String name = u.getName();
+                if (name != null && !name.equals("")) {
                     sendMessageToAll(name + " left the server!");
                 }
-                users.get(index).close();
-                users.remove(index);
-                visUserList.removeUser(index);
             }
+            u.sendMessage("disconnect!");
+            u.close();
         }
     }
 
     public void disconnectAll() {
-        for (int index = 0; index < users.size(); index++) {
-            disconnectUser(index);
+        int userCount;
+        ExecutorService remover = Executors.newFixedThreadPool(cores);
+        synchronized (users) {
+            userCount = users.size();
+        }
+        for (int i = 0; i < userCount; i++) {
+            final int iFinal = i;
+            remover.submit(() -> disconnectUser(iFinal));
         }
     }
 
@@ -179,6 +185,11 @@ public class Main {
         visUserList.close();
         gui.close();
         msgReader.shutdown();
+        try {
+            msgReader.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         disconnectAll();
         System.exit(0);
     }
