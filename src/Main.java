@@ -132,6 +132,7 @@ public class Main {
     }
 
     public void sendMessageToAll(String message) {
+        gui.addMessage(message);
         synchronized (users) {
             for (User u : users) {
                 if (u.getName() != null && !u.getName().equals("")) {
@@ -139,26 +140,29 @@ public class Main {
                 }
             }
         }
-        gui.addMessage(message);
     }
 
     public void disconnectUser(int index) {
-        if (index < users.size() && index >= 0) {
-            User u;
-            synchronized (users) {
+        User u;
+        String name;
+        synchronized (users) {
+            if (index < users.size() && index >= 0) {
                 u = users.remove(index);
                 visUserList.removeUser(index);
-                String name = u.getName();
-                if (name != null && !name.equals("")) {
-                    sendMessageToAll(name + " left the server!");
-                }
+                name = u.getName();
             }
+            else{
+                return;
+            }
+        }
+        if (name != null && !name.equals("")) {
+            sendMessageToAll(name + " left the server!");
+        }
             u.sendMessage("disconnect!");
             u.close();
         }
-    }
 
-    public void disconnectAll() {
+    private void disconnectAll() {
         int userCount;
         ExecutorService remover = Executors.newFixedThreadPool(cores);
         synchronized (users) {
